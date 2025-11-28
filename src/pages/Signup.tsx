@@ -3,8 +3,79 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+// import axiosConfig from "@/axios/axios.config";
+import { ChangeEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
 
 const Signup = () => {
+  const [loader, setLoader] = useState(false);
+
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [avatar, setAvatar] = useState<File | null>(null);
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const navigate = useNavigate();
+
+  const formData = new FormData();
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setAvatar(e.target.files[0]);
+    }
+  };
+
+
+   const handleSignup = async (e: React.FormEvent) => {
+    setLoader(true);
+    e.preventDefault();
+
+    if (!avatar) {
+      console.log("Avatar missing");
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("fullName", fullName);
+    formData.append("username", username);
+    formData.append("email", email);
+    formData.append("password", password);
+    formData.append("avatar", avatar); // FIELD NAME MUST MATCH BACKEND
+    if (coverImage) {
+      formData.append("coverImage", coverImage); // FIELD NAME MUST MATCH BACKEND
+    }
+
+    try {
+      const res = await axios.post(
+        "http://localhost:3000/api/v1/users/register",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Signup success:", res.data);
+      setLoader(false);
+      navigate("/login");
+
+    } catch (error) {
+      console.error("Signup failed:", error);
+      setLoader(false);
+    }
+  };
+
+
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8 animate-scale-in">
@@ -24,14 +95,16 @@ const Signup = () => {
 
         {/* Signup Form */}
         <div className="bg-card border border-border rounded-2xl p-8 shadow-xl">
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSignup}>
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="fullName">Full Name</Label>
               <Input
-                id="name"
+                id="fullName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Vishal Jati"
                 className="h-11"
+                required={true}
+                onChange={(e)=>setFullName(e.target.value)}
               />
             </div>
 
@@ -42,9 +115,45 @@ const Signup = () => {
                 type="email"
                 placeholder="you@example.com"
                 className="h-11"
+                required={true}
+                onChange={(e)=>setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="your username"
+                className="h-11"
+                required={true}
+                onChange={(e)=>setUsername(e.target.value)}
               />
             </div>
             
+            <div className="space-y-2">
+              <Label htmlFor="avatar">Avatar</Label>
+              <Input
+                id="avatar"
+                type="file"
+                placeholder="Avatar"
+                className="h-11"
+                required={true}
+                onChange={(e)=>setAvatar(e.target.files ? e.target.files[0] : null)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="coverImage">Cover Image</Label>
+              <Input
+                id="coverImage"
+                type="file"
+                placeholder="Cover Image"
+                className="h-11"
+                required={false}
+                onChange={(e)=>setCoverImage(e.target.files ? e.target.files[0] : null)}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -52,6 +161,8 @@ const Signup = () => {
                 type="password"
                 placeholder="••••••••"
                 className="h-11"
+                required={true}
+                onChange={(e)=>setPassword(e.target.value)}
               />
             </div>
 
@@ -62,11 +173,13 @@ const Signup = () => {
                 type="password"
                 placeholder="••••••••"
                 className="h-11"
+                required={true}
+                onChange={(e)=>setConfirmPassword(e.target.value)}
               />
             </div>
 
             <div className="flex items-start gap-2 text-sm">
-              <input type="checkbox" className="rounded border-border mt-1" />
+              <Input type="checkbox" className="rounded border-border mt-1 h-5 w-5" />
               <span className="text-muted-foreground">
                 I agree to the{" "}
                 <Link to="#" className="text-primary hover:underline">
@@ -79,8 +192,10 @@ const Signup = () => {
               </span>
             </div>
 
-            <Button className="w-full h-11 bg-gradient-primary hover:opacity-90 font-semibold">
-              Create Account
+            <Button 
+            className="w-full h-11 bg-gradient-primary hover:opacity-90 font-semibold"
+            type="submit">
+               {loader ? "Signing Up..." : "Sign Up"}
             </Button>
           </form>
 

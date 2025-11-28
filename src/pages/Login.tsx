@@ -3,8 +3,51 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
 
 const Login = () => {
+  const [loader, setLoader] = useState(false)
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")  
+  const [email, setEmail] = useState("")
+  const navigate = useNavigate()  
+
+  const submitLogin=async(e:React.FormEvent)=>{
+    setLoader(true)
+    e.preventDefault();
+    // Add login logic here (e.g., API call)
+    if(!(username || email)) {
+      alert("Please enter username or email")
+      setLoader(false)
+      return
+    } 
+    if(!password) {
+      alert("Please enter password")
+      setLoader(false)
+      return
+    }
+
+    try {
+      const response = await axios.post("/api/v1/users/login", 
+                      { username, email, password });
+      console.log("Login successful:", response.data);
+      setLoader(false)
+      navigate("/")
+      
+    } catch (error) {
+      alert("Login failed. Please check your credentials.")
+      console.error("Login error:", error);
+      setLoader(false)
+      return
+    }
+    
+  
+  }
+
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8 animate-scale-in">
@@ -24,7 +67,7 @@ const Login = () => {
 
         {/* Login Form */}
         <div className="bg-card border border-border rounded-2xl p-8 shadow-xl">
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={submitLogin}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -32,6 +75,18 @@ const Login = () => {
                 type="email"
                 placeholder="you@example.com"
                 className="h-11"
+                onChange={(e)=>setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="your username"
+                className="h-11"
+                onChange={(e)=>setUsername(e.target.value)}
               />
             </div>
             
@@ -42,6 +97,7 @@ const Login = () => {
                 type="password"
                 placeholder="••••••••"
                 className="h-11"
+                onChange={(e)=>setPassword(e.target.value)}
               />
             </div>
 
@@ -55,8 +111,10 @@ const Login = () => {
               </Link>
             </div>
 
-            <Button className="w-full h-11 bg-gradient-primary hover:opacity-90 font-semibold">
-              Sign In
+            <Button 
+            className="w-full h-11 bg-gradient-primary hover:opacity-90 font-semibold"
+             type="submit">
+              {loader ? "Logging in..." : "Login"}
             </Button>
           </form>
 
